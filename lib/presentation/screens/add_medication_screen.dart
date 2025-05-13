@@ -17,17 +17,40 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   final _nameController = TextEditingController();
   final _dosageController = TextEditingController();
   final _frequencyController = TextEditingController();
+  final _customFrequencyController = TextEditingController();
   final _notesController = TextEditingController();
 
   final List<DateTime> _reminders = [];
   String? _registrationNumber;
   bool _isSearching = false;
 
+  // Opciones de frecuencia predefinidas
+  final List<String> _frequencyOptions = [
+    'Cada hora',
+    'Cada 4 horas',
+    'Cada 8 horas',
+    'Otro'
+  ];
+
+  // Valor seleccionado del dropdown
+  String _selectedFrequency = 'Cada 8 horas';
+
+  // Flag para indicar si se está usando frecuencia personalizada
+  bool _isCustomFrequency = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar el controlador de frecuencia con el valor predeterminado
+    _frequencyController.text = _selectedFrequency;
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _dosageController.dispose();
     _frequencyController.dispose();
+    _customFrequencyController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -94,16 +117,77 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         return;
       }
 
+      // Usar la frecuencia correcta (predefinida o personalizada)
+      final frequency = _isCustomFrequency
+          ? _customFrequencyController.text
+          : _selectedFrequency;
+
       Provider.of<MedicationProvider>(context, listen: false).addMedication(
         name: _nameController.text,
         dosage: _dosageController.text,
-        frequency: _frequencyController.text,
+        frequency: frequency,
         reminders: _reminders,
         notes: _notesController.text.isEmpty ? null : _notesController.text,
         registrationNumber: _registrationNumber,
       );
 
       Navigator.pop(context);
+    }
+  }
+
+  // Método para generar recordatorios automáticos basados en la frecuencia
+  void _generateAutomaticReminders(TimeOfDay firstDoseTime, String frequency) {
+    // Limpiar recordatorios existentes
+    setState(() {
+      _reminders.clear();
+    });
+
+    // Hora de inicio seleccionada por el usuario
+    final now = DateTime.now();
+    final startTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      firstDoseTime.hour,
+      firstDoseTime.minute,
+    );
+
+    int intervalHours;
+    int totalReminders = 4; // Siempre generar 4 recordatorios
+
+    // Determinar intervalo según la frecuencia
+    switch (frequency) {
+      case 'Cada hora':
+        intervalHours = 1;
+        break;
+      case 'Cada 4 horas':
+        intervalHours = 4;
+        break;
+      case 'Cada 8 horas':
+        intervalHours = 8;
+        break;
+      default:
+        return; // No hacer nada para frecuencias personalizadas
+    }
+
+    // Generar recordatorios
+    for (int i = 0; i < totalReminders; i++) {
+      final reminderTime = startTime.add(Duration(hours: i * intervalHours));
+      setState(() {
+        _reminders.add(reminderTime);
+      });
+    }
+  }
+
+  // Método para mostrar el diálogo de selección de hora inicial
+  Future<void> _showFirstDoseTimeDialog() async {
+    final time = await showDialog<TimeOfDay>(
+      context: context,
+      builder: (context) => const custom_time_picker.TimePickerDialog(),
+    );
+
+    if (time != null) {
+      _generateAutomaticReminders(time, _selectedFrequency);
     }
   }
 
@@ -225,21 +309,63 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _frequencyController,
+              // Reemplazar TextFormField por DropdownButtonFormField
+              DropdownButtonFormField<String>(
                 decoration: InputDecoration(
-                  hintText: 'Ej: Cada 8 horas, Una vez al día',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                value: _selectedFrequency,
+                items: _frequencyOptions.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedFrequency = newValue!;
+                    _isCustomFrequency = newValue == 'Otro';
+
+                    // Actualizar el controlador de frecuencia para mantener compatibilidad
+                    _frequencyController.text = newValue;
+
+                    // Si se selecciona una frecuencia predefinida, mostrar diálogo para hora inicial
+                    if (newValue != 'Otro') {
+                      _showFirstDoseTimeDialog();
+                    }
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa la frecuencia';
+                    return 'Por favor selecciona una frecuencia';
                   }
                   return null;
                 },
               ),
+
+              // Campo de texto para frecuencia personalizada (visible solo si se selecciona "Otro")
+              if (_isCustomFrequency) ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _customFrequencyController,
+                  decoration: InputDecoration(
+                    hintText: 'Ej: Dos veces al día, Cada 12 horas',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (_isCustomFrequency &&
+                        (value == null || value.isEmpty)) {
+                      return 'Por favor ingresa la frecuencia personalizada';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

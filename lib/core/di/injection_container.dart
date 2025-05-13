@@ -2,6 +2,9 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:medialert/core/network/network_info.dart';
+import 'package:medialert/core/services/alarm_service.dart';
+import 'package:medialert/core/services/navigation_service.dart';
+import 'package:medialert/core/services/notification_service.dart';
 import 'package:medialert/data/datasources/cima_remote_datasource.dart';
 import 'package:medialert/data/datasources/medication_local_datasource.dart';
 import 'package:medialert/data/repositories/cima_repository_impl.dart';
@@ -17,7 +20,7 @@ import 'package:medialert/domain/usecases/search_cima_medications.dart';
 import 'package:medialert/domain/usecases/update_medication.dart';
 import 'package:medialert/domain/usecases/update_medication_intake.dart';
 import 'package:medialert/presentation/providers/medication_provider.dart';
-import 'package:medialert/presentation/providers/theme_provider.dart';
+import 'package:medialert/presentation/providers/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
@@ -34,12 +37,15 @@ Future<void> init() async {
       saveMedicationIntake: sl(),
       updateMedicationIntake: sl(),
       searchCimaMedications: sl(),
+      notificationService: sl(),
+      alarmService: sl(),
     ),
   );
 
   sl.registerFactory(
-    () => ThemeProvider(
+    () => SettingsProvider(
       sharedPreferences: sl(),
+      notificationService: sl(),
     ),
   );
 
@@ -52,6 +58,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SaveMedicationIntake(sl()));
   sl.registerLazySingleton(() => UpdateMedicationIntake(sl()));
   sl.registerLazySingleton(() => SearchCimaMedications(sl()));
+  sl.registerLazySingleton(() => NavigationService());
+  sl.registerLazySingleton(() => AlarmService());
 
   // Repositories
   sl.registerLazySingleton<MedicationRepository>(
@@ -67,6 +75,11 @@ Future<void> init() async {
       networkInfo: sl(),
     ),
   );
+
+  // Servicios
+  final notificationService = NotificationService();
+  await notificationService.init();
+  sl.registerLazySingleton(() => notificationService);
 
   // Data sources
   sl.registerLazySingleton<MedicationLocalDataSource>(

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "47554672128",
+    "project_id": "medialert-2efc9",
+    "storage_bucket": "medialert-2efc9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:47554672128:android:2cd0f77bc13d16fb4e8ae5",
+        "android_client_info": {
+          "package_name": "com.julencas.medialert"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQGjVQlviyqYGmZ-sBjut9rGKZ87b3K6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

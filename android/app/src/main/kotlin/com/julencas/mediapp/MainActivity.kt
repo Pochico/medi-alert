@@ -1,4 +1,4 @@
-package com.example.medialert
+package com.julencas.medialert
 
 import io.flutter.embedding.android.FlutterActivity
 

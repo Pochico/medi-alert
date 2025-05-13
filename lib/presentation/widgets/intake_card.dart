@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:medialert/core/utils/time_format_util.dart';
 import 'package:medialert/domain/entities/medication_intake.dart';
 
 class IntakeCard extends StatelessWidget {
@@ -46,7 +47,7 @@ class IntakeCard extends StatelessWidget {
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text(
-                  'Hora: ${DateFormat('HH:mm').format(intake.intakeTime)}',
+                  'Hora: ${TimeFormatUtil.formatTime(context, intake.intakeTime)}',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],

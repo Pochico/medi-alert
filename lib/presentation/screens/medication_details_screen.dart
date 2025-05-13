@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medialert/core/utils/time_format_util.dart';
 import 'package:medialert/domain/entities/medication.dart';
 import 'package:medialert/presentation/providers/medication_provider.dart';
 import 'package:medialert/presentation/routes/app_router.dart';
@@ -173,7 +174,7 @@ class _MedicationDetailsScreenState extends State<MedicationDetailsScreen> {
                         return ListTile(
                           leading: const Icon(Icons.access_time),
                           title: Text(
-                            '${reminder.hour.toString().padLeft(2, '0')}:${reminder.minute.toString().padLeft(2, '0')}',
+                            TimeFormatUtil.formatTime(context, reminder),
                           ),
                         );
                       },
